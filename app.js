@@ -7,10 +7,16 @@ const app = express();
 app.use(cors({
   origin: [
     "https://advanced-chat-app-client.vercel.app",
-    "http://localhost:5500"
+    /\.vercel\.app$/,
+    "http://localhost:5500",
+    "http://localhost:3000"
   ],
-  credentials: true
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+app.options("*", cors());
 app.use(express.json());
 
 // Public routes
