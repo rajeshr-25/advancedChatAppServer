@@ -8,7 +8,10 @@ export function createWebSocket(server) {
   const wss = new WebSocketServer({ server });
 
   wss.on("connection", async (ws, req) => {
-    const token = req.url.split("token=")[1];
+    // ---- SAFE TOKEN EXTRACTION ----
+    const query = req.url.split("?")[1];
+    const params = new URLSearchParams(query);
+    const token = params.get("token");
     if (!token) return ws.close();
 
     let user;
@@ -23,9 +26,16 @@ export function createWebSocket(server) {
     broadcastOnlineUsers();
 
     ws.on("message", async (raw) => {
-      const data = JSON.parse(raw);
+      // ---- SAFE JSON PARSE ----
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        console.log("Invalid WS message received");
+        return;
+      }
 
-      // ------- SEND MESSAGE -------
+      // -------- SEND MESSAGE --------
       if (data.type === "message") {
         const msg = {
           messageId: uuid(),
@@ -40,7 +50,7 @@ export function createWebSocket(server) {
         broadcastToAll({ type: "message", msg });
       }
 
-      // ------- TYPING INDICATOR -------
+      // -------- TYPING INDICATOR --------
       if (data.type === "typing") {
         broadcastToAll({
           type: "typing",
